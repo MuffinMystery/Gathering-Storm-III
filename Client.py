@@ -4,6 +4,7 @@ IP = '25.55.119.128:80'
 #Login Information
 username = 'Admin'
 password = ':::::'
+mode = 'edit'#'play' or 'edit' (for making maps)
 
 
 
@@ -289,17 +290,18 @@ class Entity():
         tx,ty = game.getCentreOfTile(self.data['x'],self.data['y'])
         game.c.coords(self.cid,tx,ty)#Move Sprite onto Centre of Tile
 
-##---[FOR CONNECTING TO SERVER]---
-#Connection Management
-client = ClientManager(IP)
+if mode == 'play':
+    ##---[FOR CONNECTING TO SERVER]---
+    #Connection Management
+    client = ClientManager(IP)
 
-#Thread to receive messages
-threading.Thread(target=client.receive).start()
+    #Thread to receive messages
+    threading.Thread(target=client.receive).start()
 
-#Send login details
-print('Authenticating...')
-client.send('login',[username,password])
-##---------------------------------
+    #Send login details
+    print('Authenticating...')
+    client.send('login',[username,password])
+    ##---------------------------------
 
 
 
@@ -311,27 +313,27 @@ inpManager = InputManager(game.c)
 
 
 
+if mode == 'edit':
+    ##---[FOR MAP EDITING]---
+    #Default
+    game.renderMap(game.generateMap(30,30))
 
-####---[FOR MAP EDITING]---
-###Default
-##game.renderMap(game.generateMap(30,30))
-##
-###Selection Inputs
-##win.root.bind('<Button-1>',inpManager.clearSelection)
-##win.root.bind('<B1-Motion>',inpManager.smallSelection)
-##
-##win.root.bind('<Button-3>',inpManager.clearSelection)
-##win.root.bind('<B3-Motion>',inpManager.largeSelection)
-##
-###Operation Inputs
-##win.root.bind('c',inpManager.editColour)
-##win.root.bind('r',inpManager.raiseSelection)
-##win.root.bind('l',inpManager.lowerSelection)
-##win.root.bind('x',inpManager.exportMap)
-##win.root.bind('p',inpManager.loadExported)
-##win.root.bind('k',inpManager.recentColour)
-##win.root.bind('s',inpManager.smartColour)
-####------------------------
+    #Selection Inputs
+    win.root.bind('<Button-1>',inpManager.clearSelection)
+    win.root.bind('<B1-Motion>',inpManager.smallSelection)
+
+    win.root.bind('<Button-3>',inpManager.clearSelection)
+    win.root.bind('<B3-Motion>',inpManager.largeSelection)
+
+    #Operation Inputs
+    win.root.bind('c',inpManager.editColour)
+    win.root.bind('r',inpManager.raiseSelection)
+    win.root.bind('l',inpManager.lowerSelection)
+    win.root.bind('x',inpManager.exportMap)
+    win.root.bind('p',inpManager.loadExported)
+    win.root.bind('k',inpManager.recentColour)
+    win.root.bind('s',inpManager.smartColour)
+    ##------------------------
 
 
 win.mainloop()
