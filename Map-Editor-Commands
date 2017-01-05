@@ -1,0 +1,19 @@
+MAP EDITING
+-----------
+To use the map editing feature, set mode = 'edit' rather than 'play'
+
+Left-click......Small Selection Brush
+Right-click.....Large Selection Brush
+c...............Edit Colour
+r...............Raise Selection
+l...............Lower Selection
+x...............Export Map
+p...............Load Previously Exported Map
+k...............Colour Selection quickly with previously selected colour
+s...............Input two colours, it will colour all flat tiles the first colour, and other tiles the second colour
+
+Colours are in the form
+r,g,b
+ranging from 0 to 255
+You can use a capital X in place of a number to generate a random number (180-220) for each tile coloured,
+creating a variance effect
