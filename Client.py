@@ -1,6 +1,6 @@
 ###Settings
 #Host
-IP = '172.16.14.5:80'
+IP = '25.55.119.128:80'
 #Login Information
 username = 'Admin'
 password = ':::::'
@@ -76,18 +76,18 @@ class ClientManager():
         self.s.sendall(str({'header':header,'data':data,'time':self.timeStamp()}).encode())
     def receive(self):
         msg = 'None'
-        self.send('load',True)
         while True:
             try:
                 msg = self.s.recv(2**30)
                 msg = zlib.decompress(msg)
                 msg = eval(msg.decode())
-                print('Msg: ',msg)
+                print('[START|||',msg,'|||END]')
                 if msg['header'] == 'update':
                     gamestate = msg['data']
                 elif msg['header'] == 'login':
                     if msg['data'] == True:
                         print('Authentication Successful')
+                        self.send('load',True)
                     else:
                         print('Authentication Failed')
                 elif msg['header'] == 'map':
