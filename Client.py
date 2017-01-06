@@ -1,10 +1,10 @@
 ###Settings
 #Host
-IP = '91.125.115.127:80'
+IP = '25.55.119.128:80'
 #Login Information
 username = 'Admin'
 password = ':::::'
-mode = 'edit'#'play' or 'edit' (for making maps)
+mode = 'play'#'play' or 'edit' (for making maps)
 
 
 
@@ -78,27 +78,28 @@ class ClientManager():
     def receive(self):
         msg = 'None'
         while True:
-            try:
-                msg = self.s.recv(2**30)
-                msg = zlib.decompress(msg)
-                msg = eval(msg.decode())
-                print('[START|||',msg,'|||END]')
-                if msg['header'] == 'update':
-                    gamestate = msg['data']
-                elif msg['header'] == 'login':
-                    if msg['data'] == True:
-                        print('Authentication Successful')
-                        self.send('load',True)
-                    else:
-                        print('Authentication Failed')
-                elif msg['header'] == 'map':
-                    game.renderMap(msg['data'])
-##                elif msg['header'] == 'entity':
-##                    worldManager.
-            except:
-                print('[!] Invalid Server Request [!]')
-                print('Please show this error report\nto the server administrator:')
-                print(msg)
+##            try:
+            msg = self.s.recv(2**30)
+            msg = zlib.decompress(msg)
+            msg = eval(msg.decode())
+            if msg['header'] == 'update':
+                gamestate = msg['data']
+            elif msg['header'] == 'login':
+                if msg['data'] == True:
+                    print('Authentication Successful')
+                    self.send('load-map',True)
+                else:
+                    print('Authentication Failed')
+            elif msg['header'] == 'map':
+                game.renderMap(msg['data'])
+                self.send('load-entities',True)
+            elif msg['header'] == 'entity':
+                for e in msg['data']:
+                    worldManager.registerEntity(e[0],e[1]['x'],e[1]['y'],e[1]['sprite'])
+            elif msg['header'] == 'move-entity':
+                worldManager.moveEntity(msg['data'][0],msg['data'][1],msg['data'][2])
+##            except:
+##                print('[!] Invalid Server Request [!]')
     def sendReq(self,event):
         if event.keysym in ['w','a','s','d']:
             self.send('move',{'w':(0,1),'a':(-1,0),'s':(0,-1),'d':(1,0)}[event.keysym])
@@ -152,6 +153,7 @@ class GameManager():#Deals with game's graphics
 ##            self.c.update()
         for z in range(-10,64,1):
             self.c.lift('z'+str(z))
+        self.c.lift('entity')
     def move(self,tag,x,y):
         self.c.move(tag,x,y)
 ##    def create_poly(self,coords,fill='#00ff00',outline='',tags=()):
@@ -163,7 +165,7 @@ class GameManager():#Deals with game's graphics
         #Calculate centre using mean of corner coordinates
         return [(tCoords[0]+tCoords[4])/2,(tCoords[1]+tCoords[5])/2]
     def create_sprite(self,x,y,filename):
-        return self.c.create_image(x,y,image=self.images[filename])
+        return self.c.create_image(x,y,image=self.images[filename],tags='entity',anchor=tkinter.S)
     def eraseCanvas(self):
         self.c.delete(tkinter.ALL)
     def raiseTile(self,cid,y):
@@ -279,24 +281,28 @@ class InputManager():
     def largeSelection(self,event):
         self.selection(event,sel_size=20)
 
+class localWorldManager():
+    def __init__(self):
+        self.objs = {}
+    def registerEntity(self,UUID,x,y,sprite):
+        self.objs[UUID] = localEntity(UUID,x,y,sprite)
+    def removeEntity(self,UUID):
+        self.objs[UUID].delete()
+        del self.objs[UUID]
+    def moveEntity(self,UUID,newx,newy):
+        self.objs[UUID].move(newx,newy)
 
-class Entity():
-    def __init__(self,UUID,data,name=None):#Name is only for player Entities
+class localEntity():
+    def __init__(self,UUID,x,y,image):
         self.UUID = UUID
-        #Default Stats
-        self.data = {'map':'start','x':0,'y':0,'moveSpeed':1,'abilities':[],'xp':0,'gold':0,'jumpHeight':2,'sprite':'texture_default_character_new.gif'}
-        #Overwrite with loaded data
-        for k in data.keys():
-            self.data[k] = data[k]
-        self.photo = tkinter.PhotoImage()
-        tx,ty = game.getCentreOfTile(self.data['x'],self.data['y'])
-        self.cid = game.create_sprite(tx,ty,self.data['sprite'])
+        self.cid = game.create_sprite(x,y,image)
+        self.move(x,y)
     def move(self,newx,newy):
         """Moves the Entity onto the tile at newx, newy"""
-        self.data['x'] = newx
-        self.data['y'] = newy
-        tx,ty = game.getCentreOfTile(self.data['x'],self.data['y'])
+        tx,ty = game.getCentreOfTile(newx,newy)
         game.c.coords(self.cid,tx,ty)#Move Sprite onto Centre of Tile
+    def delete(self):
+        game.c.delete(self.cid)
 
 
 
@@ -304,6 +310,8 @@ class Entity():
 win = Window()
 
 game = GameManager()
+
+worldManager = localWorldManager()
 
 inpManager = InputManager(game.c)
 

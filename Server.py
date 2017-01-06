@@ -86,6 +86,7 @@ class LoginManager():
         """Removes a user and their user data"""
         if username in list(self.userData.keys()):
             del self.userData[username]
+#Sample data: {'map':'start','x':0,'y':0,'moveSpeed':1,'abilities':[],'xp':0,'gold':0,'jumpHeight':2,'sprite':'texture_default_character_new.gif'}
 
 class ServerManager():
     def __init__(self,port,max_conns):
@@ -133,14 +134,20 @@ class ServerManager():
             while True:#RECV LOOP
                 try:
                     msg = eval(conn.recv(2**16).decode())
-                    print(msg)
-                    if msg['header'] == 'load':
-                        self.send(conn,'map',worldManager.getMapData(entity.data['map']))
+                    if msg['header'] == 'load-entities':
                         self.send(conn,'entity',worldManager.getEntitiesInMap(entity.data['map']))
+                    if msg['header'] == 'load-map':
+                        self.send(conn,'map',worldManager.getMapData(entity.data['map']))
+                    if msg['header'] == 'move':
+                        entity.move(msg['data'][0],msg['data'][1])
                 except:
-                    conn.close()
-                    print('[!] Connection with',addr,'Terminated')
-                    break
+                    try:
+                        self.send(conn,'connection-test',True)
+                    except:
+                        entity.delete()
+                        conn.close()
+                        print('[!] Connection with',addr,'Terminated')
+                        break
     def mainloop(self):
         """Accepts connections and assigns new threads to each"""
         while True:
@@ -192,7 +199,7 @@ class Entity():
     def __init__(self,UUID,data,name=None):#Name is only for player Entities
         self.UUID = UUID
         #Default Stats
-        self.data = {'map':'start','x':0,'y':0,'moveSpeed':1,'abilities':[],'xp':0,'gold':0,'jumpHeight':2,'sprite':'texture_default_character_new.gif'}
+        self.data = {'map':'start','x':0,'y':0,'z':0,'moveSpeed':1,'abilities':[],'xp':0,'gold':0,'jumpHeight':2,'sprite':'texture_default_character_new.gif'}
         #Overwrite with loaded data
         for k in data.keys():
             self.data[k] = data[k]
@@ -204,11 +211,12 @@ class Entity():
         if (x**2 + y**2)**.5 <= self.data['moveSpeed']:
             target = self.data['x']+x,self.data['y']+y
             try:
-                height_diff = worldManager.allMapData[self.data['map']][self.data['x'],self.data['y']][0] - worldManager.allMapData[self.data['map']][self.target[0],self.target[1]][0]
+                height_diff = worldManager.allMapData[self.data['map']][self.data['x'],self.data['y']][0] - worldManager.allMapData[self.data['map']][target[0],target[1]][0]
                 if abs(height_diff) <= self.data['jumpHeight']:#Cannot go up or down by a height more than two
-                    self.data['x'] = targetx
-                    self.data['y'] = targety
-                    self.data['z'] = worldManager.allMapData[self.data['map']][0]
+                    self.data['x'] = target[0]
+                    self.data['y'] = target[1]
+                    self.data['z'] = worldManager.allMapData[self.data['map']][x,y][0]
+                    socketServer.broadcast('move-entity',[self.UUID,self.data['x'],self.data['y'],self.data['z']])
             except:#Trying to walk off the map will cause an index error
                 pass
     def save(self):
