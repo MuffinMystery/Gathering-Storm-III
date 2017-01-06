@@ -4,7 +4,7 @@ IP = '91.125.115.127:80'
 #Login Information
 username = 'Admin'
 password = ':::::'
-mode = 'play'#'play' or 'edit' (for making maps)
+mode = 'edit'#'play' or 'edit' (for making maps)
 
 
 
@@ -167,9 +167,12 @@ class GameManager():#Deals with game's graphics
     def eraseCanvas(self):
         self.c.delete(tkinter.ALL)
     def raiseTile(self,cid,y):
-        coords = self.getCoords(cid)
-        colour = self.rendered_map[coords[0],coords[1]][1:]
-        self.rendered_map[coords[0],coords[1]] = [coords[2]+y,colour[0],colour[1],colour[2]]
+        try:
+            coords = self.getCoords(cid)
+            colour = self.rendered_map[coords[0],coords[1]][1:]
+            self.rendered_map[coords[0],coords[1]] = [coords[2]+y,colour[0],colour[1],colour[2]]
+        except:
+            pass
     def colourTile(self,cid,newcol):
         newcol = newcol.replace('X',str(random.randint(180,220))).split(',')
         coords = self.getCoords(cid)
