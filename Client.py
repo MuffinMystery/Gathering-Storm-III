@@ -206,9 +206,12 @@ class InputManager():
     def restoreSelection(self):
         self.selected = []
         for s in self.selectedCoords:
-            cid = self.cref.find_withtag([s[0],s[1]])[0]
-            self.selected.append(cid)
-            self.cref.itemconfig(cid,outline='#ffff00',width=2)
+            try:
+                cid = self.cref.find_withtag([s[0],s[1]])[0]
+                self.selected.append(cid)
+                self.cref.itemconfig(cid,outline='#ffff00',width=2)
+            except:
+                pass
     def editColour(self,event):
         self.updateSelectedCoords()
         try:
