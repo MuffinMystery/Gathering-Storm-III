@@ -1,10 +1,10 @@
 ###Settings
 #Host
-IP = '25.55.119.128:80'
+IP = '91.125.115.127:80'
 #Login Information
 username = 'Admin'
 password = ':::::'
-mode = 'edit'#'play' or 'edit' (for making maps)
+mode = 'play'#'play' or 'edit' (for making maps)
 
 
 
@@ -99,7 +99,9 @@ class ClientManager():
                 print('[!] Invalid Server Request [!]')
                 print('Please show this error report\nto the server administrator:')
                 print(msg)
-
+    def sendReq(self,event):
+        if event.keysym in ['w','a','s','d']:
+            self.send('move',{'w':(0,1),'a':(-1,0),'s':(0,-1),'d':(1,0)}[event.keysym])
 
 class GameManager():#Deals with game's graphics
     def __init__(self):
@@ -290,6 +292,18 @@ class Entity():
         tx,ty = game.getCentreOfTile(self.data['x'],self.data['y'])
         game.c.coords(self.cid,tx,ty)#Move Sprite onto Centre of Tile
 
+
+
+
+win = Window()
+
+game = GameManager()
+
+inpManager = InputManager(game.c)
+
+
+
+
 if mode == 'play':
     ##---[FOR CONNECTING TO SERVER]---
     #Connection Management
@@ -301,15 +315,12 @@ if mode == 'play':
     #Send login details
     print('Authenticating...')
     client.send('login',[username,password])
+    win.root.bind('w',client.sendReq)
+    win.root.bind('a',client.sendReq)
+    win.root.bind('s',client.sendReq)
+    win.root.bind('d',client.sendReq)
     ##---------------------------------
 
-
-
-win = Window()
-
-game = GameManager()
-
-inpManager = InputManager(game.c)
 
 
 
